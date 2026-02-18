@@ -7,6 +7,7 @@
 int ac = 0;
 int pc = 0;
 unsigned char *v;
+size_t bytes_read;
 
 enum NEANDER_COMMANDS
 {
@@ -123,11 +124,24 @@ int get_signature()
     return -1;
 }
 
+int print_neander(size_t bytes_read)
+{
+    printf("Read %zu bytes. Content:\n", bytes_read);
+    for (size_t i = pc; i < bytes_read; i = i + 2)
+    {
+        printf("%02X ", v[i]);
+        if (i % 16 == 0)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n\n");
+}
+
 int run_mv(char *filename)
 {
     FILE *fp;
     long file_size;
-    size_t bytes_read;
 
     fp = fopen(filename, "rb");
     if (fp == NULL)
@@ -166,16 +180,7 @@ int run_mv(char *filename)
 
     pc += 4; // skip the signature
 
-    printf("Read %zu bytes. Content:\n", bytes_read);
-    for (size_t i = pc; i < bytes_read; i = i + 2)
-    {
-        printf("%02X ", v[i]);
-        if (i % 16 == 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n\n");
+    print_neander(bytes_read);
 
     int i = pc;
     while (i < bytes_read)
@@ -201,7 +206,7 @@ int run_mv(char *filename)
             break;
         }
 
-        if (i % 16 == 0)
+        if ((i - 4) % 16 == 0)
         {
             printf("\n");
         }
