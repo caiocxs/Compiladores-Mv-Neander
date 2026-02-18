@@ -4,7 +4,7 @@
 
 int ac;
 int pc;
-char *v;
+unsigned char *v;
 
 int n_function();
 int z_function();
