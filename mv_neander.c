@@ -49,51 +49,78 @@ int nop_command()
 
 int sta_command(unsigned char addr)
 {
+    printf("\nSTA - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+
+    v[((int)addr + 2) * 2] = (unsigned char)ac;
+
     return 0;
 }
 
 int lda_command(unsigned char addr)
 {
+    printf("\nLDA - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    ac = (int)v[((int)addr + 2) * 2];
     return 0;
 }
 
-int add_command(unsigned charaddr)
+int add_command(unsigned char addr)
 {
+    printf("\nADD - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    ac += (int)v[((int)addr + 2) * 2];
     return 0;
 }
 
 int or_command(unsigned char addr)
 {
+    printf("\nOR - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    ac = ac | v[((int)addr + 2) * 2];
     return 0;
 }
 
 int and_command(unsigned char addr)
 {
+    printf("\nAND - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    ac = ac & v[((int)addr + 2) * 2];
     return 0;
 }
 
 int not_command()
 {
+    ac = !ac;
     return 0;
 }
 
 int jmp_command(unsigned char addr)
 {
+    printf("\nJMP - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+
+    pc = (int)v[((int)addr + 2) * 2];
     return 0;
 }
 
 int jn_command(unsigned char addr)
 {
+    printf("\nJN - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    if (n_function())
+    {
+        pc = (int)v[((int)addr + 2) * 2];
+    }
     return 0;
 }
 
 int jz_command(unsigned char addr)
 {
+    printf("\nJZ - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
+    if (n_function())
+    {
+        pc = (int)v[((int)addr + 2) * 2];
+    }
     return 0;
 }
 
 int hlt_command()
 {
+    pc = bytes_read;
     return 0;
 }
 
@@ -178,42 +205,73 @@ int run_mv(char *filename)
     }
     printf("\n");
 
-    pc += 4; // skip the signature
+    pc = (pc % 256) + 4; // skip the signature
 
     print_neander(bytes_read);
 
-    int i = pc;
-    while (i < bytes_read)
+    while (pc < bytes_read)
     {
         int result;
 
-        switch (v[i])
+        switch (v[pc])
         {
         case NOP:
             result = nop_command();
             break;
         case STA:
-            i = i + 2;
-            result = sta_command(v[i]);
+            pc = pc + 2;
+            result = sta_command(v[pc]);
+            printf("\nAC: %d", ac);
             break;
         case LDA:
-            result = nop_command();
+            pc = pc + 2;
+            result = lda_command(v[pc]);
+            printf("\nAC: %d", ac);
             break;
         case ADD:
-            result = nop_command();
+            pc = pc + 2;
+            result = add_command(v[pc]);
+            printf("\nAC: %d", ac);
+            break;
+        case OR:
+            pc = pc + 2;
+            result = or_command(v[pc]);
+            printf("\nAC: %d", ac);
+            break;
+        case NOT:
+            pc = pc + 2;
+            result = not_command();
+            printf("\nAC: %d", ac);
+            break;
+        case JMP:
+            pc = pc + 2;
+            result = jmp_command(v[pc]);
+            printf("\nAC: %d", ac);
+            break;
+        case JN:
+            pc = pc + 2;
+            result = jn_command(v[pc]);
+            printf("\nAC: %d", ac);
+            break;
+        case JZ:
+            pc = pc + 2;
+            result = jz_command(v[pc]);
+            printf("\nAC: %d", ac);
             break;
         default:
             break;
         }
 
-        if ((i - 4) % 16 == 0)
+        if ((pc - 4) % 16 == 0)
         {
-            printf("\n");
+            // printf("\n");
         }
 
-        i = i + 2;
+        pc = pc + 2;
     }
     printf("\n");
+
+    print_neander(bytes_read);
 
     fclose(fp);
     free(v);
