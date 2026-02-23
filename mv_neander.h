@@ -2,8 +2,8 @@
 #ifndef MV_NEANDER_H
 #define MV_NEANDER_H
 
-int ac;
-int pc;
+unsigned int ac;
+unsigned int pc;
 unsigned char *v;
 
 int n_function();

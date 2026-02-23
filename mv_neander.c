@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdint.h>
 
-int ac = 0;
-int pc = 0;
+unsigned int ac = 0;
+unsigned int pc = 0;
 unsigned char *v;
 size_t bytes_read;
 
@@ -26,9 +26,19 @@ enum NEANDER_COMMANDS
 
 unsigned char SIGNATURE[] = {0x03, 0x4E, 0x44, 0x52};
 
+int negative_value(int value)
+{
+    if (value == 128)
+        return -128;
+    if (value > 128)
+        return (value - 128) * -1;
+    return value;
+}
+
 int n_function()
 {
-    if (ac > 0)
+    printf("\nN_F - %d", negative_value(ac));
+    if (negative_value(ac) >= 0)
         return 0;
     else
         return 1;
@@ -86,7 +96,9 @@ int and_command(unsigned char addr)
 
 int not_command()
 {
-    ac = !ac;
+    printf("\nNOT - %d", ac);
+    ac = (unsigned char)~ac;
+
     return 0;
 }
 
@@ -94,16 +106,18 @@ int jmp_command(unsigned char addr)
 {
     printf("\nJMP - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
 
-    pc = (int)v[((int)addr + 2) * 2];
+    pc = ((int)addr + 2) * 2;
     return 0;
 }
 
 int jn_command(unsigned char addr)
 {
     printf("\nJN - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
-    if (n_function())
+    int result = n_function();
+    if (result)
     {
-        pc = (int)v[((int)addr + 2) * 2];
+        printf("\n JN - %d", result);
+        pc = ((int)addr + 2) * 2;
     }
     return 0;
 }
@@ -111,15 +125,19 @@ int jn_command(unsigned char addr)
 int jz_command(unsigned char addr)
 {
     printf("\nJZ - HEXA: %x, DECI: %d, VALUE: %d", addr, addr, v[((int)addr + 2) * 2]);
-    if (n_function())
+
+    int result = z_function();
+    if (result)
     {
-        pc = (int)v[((int)addr + 2) * 2];
+        printf("\n JZ - %d", result);
+        pc = ((int)addr + 2) * 2;
     }
     return 0;
 }
 
 int hlt_command()
 {
+    printf("\nHLT - AC: %d - V[PC]: %x - PC: %d", ac, v[pc], (((pc - 2) / 2) - 1));
     pc = bytes_read;
     return 0;
 }
@@ -154,13 +172,13 @@ int get_signature()
 int print_neander(size_t bytes_read)
 {
     printf("Read %zu bytes. Content:\n", bytes_read);
-    for (size_t i = pc; i < bytes_read; i = i + 2)
+    for (size_t i = 4; i < bytes_read; i = i + 2)
     {
-        printf("%02X ", v[i]);
-        if (i % 16 == 0)
+        if ((i - 4) % 32 == 0 && i != 4)
         {
             printf("\n");
         }
+        printf("%02X ", v[i]);
     }
     printf("\n\n");
 }
@@ -168,12 +186,14 @@ int print_neander(size_t bytes_read)
 int run_mv(char *filename)
 {
     FILE *fp;
+    FILE *out;
     long file_size;
 
     fp = fopen(filename, "rb");
-    if (fp == NULL)
+    out = fopen("out.mem", "wb");
+    if (fp == NULL || out == NULL)
     {
-        printf("Error opening file");
+        printf("Error opening file OR Error in out");
         return -1;
     }
 
@@ -213,6 +233,9 @@ int run_mv(char *filename)
     {
         int result;
 
+        if (v[pc] != NOP)
+            printf("\nAC: %d - V[PC]: %x - PC: %d", ac, v[pc], ((pc - 2) / 2) - 1);
+
         switch (v[pc])
         {
         case NOP:
@@ -221,59 +244,55 @@ int run_mv(char *filename)
         case STA:
             pc = pc + 2;
             result = sta_command(v[pc]);
-            printf("\nAC: %d", ac);
             break;
         case LDA:
             pc = pc + 2;
             result = lda_command(v[pc]);
-            printf("\nAC: %d", ac);
             break;
         case ADD:
             pc = pc + 2;
             result = add_command(v[pc]);
-            printf("\nAC: %d", ac);
             break;
         case OR:
             pc = pc + 2;
             result = or_command(v[pc]);
-            printf("\nAC: %d", ac);
+            break;
+        case AND:
+            pc = pc + 2;
+            result = and_command(v[pc]);
             break;
         case NOT:
-            pc = pc + 2;
             result = not_command();
-            printf("\nAC: %d", ac);
             break;
         case JMP:
             pc = pc + 2;
             result = jmp_command(v[pc]);
-            printf("\nAC: %d", ac);
-            break;
+            continue;
         case JN:
             pc = pc + 2;
             result = jn_command(v[pc]);
-            printf("\nAC: %d", ac);
-            break;
+            continue;
         case JZ:
             pc = pc + 2;
             result = jz_command(v[pc]);
-            printf("\nAC: %d", ac);
+            continue;
+        case HLT:
+            result = hlt_command();
             break;
         default:
             break;
         }
 
-        if ((pc - 4) % 16 == 0)
-        {
-            // printf("\n");
-        }
-
         pc = pc + 2;
     }
-    printf("\n");
+    printf("\n\n");
+
+    fwrite(v, bytes_read, 1, out);
 
     print_neander(bytes_read);
 
     fclose(fp);
+    fclose(out);
     free(v);
 
     return 0;
