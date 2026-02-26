@@ -7,20 +7,23 @@ LDFLAGS = -lncurses
 EXE_INTERFACE = interface
 EXE_NEANDER = mv_neander
 
+# Caminhos dos arquivos fonte
+SRC_INTERFACE = interface/ui.c
+SRC_NEANDER = neander/mv.c
+HDR_NEANDER = neander/mv.h
+
 # --- Alvos Principais ---
 
 # Compila ambos se você digitar apenas 'make'
 all: $(EXE_INTERFACE) $(EXE_NEANDER)
 
 # Compila apenas a interface
-# O ncurses precisa da flag -lncurses para linkar a biblioteca
-$(EXE_INTERFACE): interface.c
-	$(CC) $(CFLAGS) interface.c -o $(EXE_INTERFACE) $(LDFLAGS)
+$(EXE_INTERFACE): $(SRC_INTERFACE)
+	$(CC) $(CFLAGS) $(SRC_INTERFACE) -o $(EXE_INTERFACE) $(LDFLAGS)
 
-# Compila apenas o mv_neander
-# Ele depende do .c e do .h; se o .h mudar, ele recompila
-$(EXE_NEANDER): mv_neander.c mv_neander.h
-	$(CC) $(CFLAGS) mv_neander.c -o $(EXE_NEANDER)
+# O alvo agora depende de neander/mv.c e neander/mv.h
+$(EXE_NEANDER): $(SRC_NEANDER) $(HDR_NEANDER)
+	$(CC) $(CFLAGS) $(SRC_NEANDER) -o $(EXE_NEANDER)
 
 # --- Utilitários ---
 
