@@ -1,6 +1,6 @@
 
-#ifndef MV_NEANDER_H
-#define MV_NEANDER_H
+#ifndef MV_H
+#define MV_H
 
 unsigned int ac;
 unsigned int pc;
