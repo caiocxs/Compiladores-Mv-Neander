@@ -187,7 +187,7 @@ int run_mv(char *filename)
 {
     FILE *fp;
     FILE *out;
-    long file_size;
+    size_t file_size;
 
     fp = fopen(filename, "rb");
     out = fopen("out.mem", "wb");
